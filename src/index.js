@@ -42,7 +42,7 @@ async function runAction() {
  */
 async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `hurl-${version}`)
-  const cacheKey = `hurl-cache-${version}-${process.platform}-${process.arch}`
+  const cacheKey = `hurl-cache-v2-${version}-${process.platform}-${process.arch}`
 
   core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
@@ -58,7 +58,6 @@ async function doInstall(version) {
     core.info(`👌 Hurl restored from cache`)
   } else { // cache MISS
     const distUri = getHurlURI(process.platform, process.arch, version)
-    core.info(distUri)
     const distPath = await tc.downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
