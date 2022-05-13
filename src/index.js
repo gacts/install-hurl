@@ -58,6 +58,7 @@ async function doInstall(version) {
     core.info(`👌 Hurl restored from cache`)
   } else { // cache MISS
     const distUri = getHurlURI(process.platform, process.arch, version)
+    core.info(distUri)
     const distPath = await tc.downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
@@ -98,10 +99,11 @@ async function doCheck() {
     throw new Error('hurl binary file not found in $PATH')
   }
 
-  core.info(`Hurl installed: ${hurlBinPath}`)
+  await exec.exec('hurl', ['--version'], {silent: true})
+
   core.setOutput('hurl-bin', hurlBinPath)
 
-  await exec.exec('hurl', ['--version'], {silent: true})
+  core.info(`Hurl installed: ${hurlBinPath}`)
 }
 
 /**
