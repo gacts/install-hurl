@@ -20,5 +20,5 @@ runs:
   main: dist/index.js
 
 branding:
-  icon: battery-charging
-  color: green
+  icon: compass
+  color: blue
