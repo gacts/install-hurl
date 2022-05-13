@@ -1,0 +1,24 @@
+name: Install hurl (cross-platform)
+description: Installs hurl binary file into your actions workflow
+
+inputs:
+  version:
+    description: Hurl version
+    required: true
+    default: latest
+  github-token:
+    description: GitHub auth token. Since there's a default, this is typically not supplied by the user
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  hurl-bin:
+    description: Path to the hurl binary file
+
+runs:
+  using: node16
+  main: dist/index.js
+
+branding:
+  icon: battery-charging
+  color: green
