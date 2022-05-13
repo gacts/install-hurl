@@ -42,7 +42,7 @@ async function runAction() {
  */
 async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `hurl-${version}`)
-  const cacheKey = `hurl-cache-v2-${version}-${process.platform}-${process.arch}`
+  const cacheKey = `hurl-cache-${version}-${process.platform}-${process.arch}`
 
   core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
