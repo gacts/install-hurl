@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Orange-OpenSource/hurl/master/docs/logo-dark.svg?sanitize=true#gh-dark-mode-only" alt="Logo" width="250" />
+  <img src="https://raw.githubusercontent.com/Orange-OpenSource/hurl/master/art/logo-mini-dark.svg" alt="Logo" width="250" />
 </p>
 
 # Install [hurl][hurl] action
