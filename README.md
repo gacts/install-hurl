@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Orange-OpenSource/hurl/master/art/logo-mini-dark.svg" alt="Logo" width="250" />
+  <img src="https://user-images.githubusercontent.com/7326800/170708958-a0986e48-c467-4a48-91a2-b451f5397feb.svg" alt="Logo" width="250" />
 </p>
 
 # Install [hurl][hurl] action
