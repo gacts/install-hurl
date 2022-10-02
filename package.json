@@ -27,7 +27,8 @@
     "@actions/exec": "^1.1.1",
     "@actions/github": "^5.1.1",
     "@actions/io": "^1.1.2",
-    "@actions/tool-cache": "^2.0.1"
+    "@actions/tool-cache": "^2.0.1",
+    "semver": "^7.3.7"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.34.0",

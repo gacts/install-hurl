@@ -4,6 +4,7 @@ const github = require('@actions/github') // docs: https://github.com/actions/to
 const io = require('@actions/io') // docs: https://github.com/actions/toolkit/tree/main/packages/io
 const cache = require('@actions/cache') // docs: https://github.com/actions/toolkit/tree/main/packages/cache
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+const semver = require('semver') // docs: https://github.com/npm/node-semver#readme
 const path = require('path')
 const os = require('os')
 
@@ -144,12 +145,14 @@ function getHurlURI(platform, arch, version) {
     }
 
     case 'darwin': {
+      const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
+
       switch (arch) {
         case 'arm64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-arm64-osx.tar.gz`
+          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-arm64-${osName}.tar.gz`
 
         case 'x64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-osx.tar.gz`
+          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
