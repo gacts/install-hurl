@@ -138,7 +138,7 @@ function getHurlURI(platform, arch, version) {
 
   switch (platform) {
     case 'linux': {
-      if (semver.lt(version, '4.1.0', true)) {
+      if (semver.lte(version, '4.1.0', true)) {
         if (arch === 'x64') { // Amd64
           return `${baseUrl}/${version}/hurl-${version}-x86_64-linux.tar.gz`
         }
