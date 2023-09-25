@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog][keepachangelog] and this project adher
 
 ### Fixed
 
-- Distributive URLs for hurl versions `4.1.0` and above
+- The distributive URL for hurl versions `4.1.0` and above
 
 ## v1.0.3
 

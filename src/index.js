@@ -71,10 +71,15 @@ async function doInstall(version) {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
-        for await (const file of (await glob.create(path.join(pathToUnpack, `hurl-${version}*`))).globGenerator()) {
-          core.info(file)
-          await io.mv(file, pathToInstall)
+        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`))).glob()
+
+        if (files.length !== 1) {
+          throw new Error('Distributive archive contains more than one entry')
         }
+
+        core.info(files[0])
+
+        await io.mv(files[0], pathToInstall)
 
         break
 
