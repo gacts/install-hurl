@@ -4,6 +4,7 @@ const github = require('@actions/github') // docs: https://github.com/actions/to
 const io = require('@actions/io') // docs: https://github.com/actions/toolkit/tree/main/packages/io
 const cache = require('@actions/cache') // docs: https://github.com/actions/toolkit/tree/main/packages/cache
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+const glob = require('@actions/glob') // docs: https://github.com/actions/toolkit/tree/main/packages/glob
 const semver = require('semver') // docs: https://github.com/npm/node-semver#readme
 const path = require('path')
 const os = require('os')
@@ -69,7 +70,11 @@ async function doInstall(version) {
       case distUri.endsWith('tar.gz'):
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
-        await io.mv(path.join(pathToUnpack, `hurl-${version}`), pathToInstall)
+
+        for await (const file of (await glob.create(path.join(pathToUnpack, `hurl-${version}*`))).globGenerator()) {
+          await io.mv(file, pathToInstall)
+        }
+
         break
 
       case distUri.endsWith('zip'):
@@ -137,7 +142,7 @@ async function getLatestHurlVersion(githubAuthToken) {
  * @throws
  */
 function getHurlURI(platform, arch, version) {
-  const baseUrl = 'https://github.com/Orange-OpenSource/hurl/releases/download/'
+  const baseUrl = 'https://github.com/Orange-OpenSource/hurl/releases/download'
 
   switch (platform) {
     case 'linux': {
