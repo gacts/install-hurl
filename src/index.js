@@ -4,6 +4,7 @@ const github = require('@actions/github') // docs: https://github.com/actions/to
 const io = require('@actions/io') // docs: https://github.com/actions/toolkit/tree/main/packages/io
 const cache = require('@actions/cache') // docs: https://github.com/actions/toolkit/tree/main/packages/cache
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+const glob = require('@actions/glob') // docs: https://github.com/actions/toolkit/tree/main/packages/glob
 const semver = require('semver') // docs: https://github.com/npm/node-semver#readme
 const path = require('path')
 const os = require('os')
@@ -59,6 +60,9 @@ async function doInstall(version) {
     core.info(`👌 Hurl restored from cache`)
   } else { // cache MISS
     const distUri = getHurlURI(process.platform, process.arch, version)
+
+    core.info(`📦 Downloading the distributive: ${distUri}`)
+
     const distPath = await tc.downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
@@ -66,7 +70,19 @@ async function doInstall(version) {
       case distUri.endsWith('tar.gz'):
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
-        await io.mv(path.join(pathToUnpack, `hurl-${version}`), pathToInstall)
+
+        // since v4.1.0 dist directory name (inside the archive) is `hurl-${version}-${platform}-${arch}` instead of `hurl-${version}`
+        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), { // eslint-disable-line no-case-declarations
+          implicitDescendants: false,
+          matchDirectories: true,
+        })).glob()
+
+        if (files.length !== 1) {
+          throw new Error('Distributive archive contains more than one entry')
+        }
+
+        await io.mv(files[0], pathToInstall)
+
         break
 
       case distUri.endsWith('zip'):
@@ -134,34 +150,60 @@ async function getLatestHurlVersion(githubAuthToken) {
  * @throws
  */
 function getHurlURI(platform, arch, version) {
+  const baseUrl = 'https://github.com/Orange-OpenSource/hurl/releases/download'
+
   switch (platform) {
     case 'linux': {
+      if (semver.lt(version, '4.1.0', true)) {
+        if (arch === 'x64') { // Amd64
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-linux.tar.gz`
+        }
+      }
+
       switch (arch) {
-        case 'x64': // Amd64
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-linux.tar.gz`
+        case 'arm64':
+          return `${baseUrl}/${version}/hurl-${version}-aarch64-unknown-linux-gnu.tar.gz`
+
+        case 'x64':
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
       }
 
       throw new Error('Unsupported linux architecture')
     }
 
     case 'darwin': {
-      const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
+      if (semver.lt(version, '4.1.0', true)) {
+        const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
+
+        switch (arch) {
+          case 'arm64':
+            return `${baseUrl}/${version}/hurl-${version}-arm64-${osName}.tar.gz`
+
+          case 'x64':
+            return `${baseUrl}/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
+        }
+      }
 
       switch (arch) {
         case 'arm64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-arm64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-aarch64-apple-darwin.tar.gz`
 
         case 'x64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-apple-darwin.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
     }
 
     case 'win32': {
-      switch (arch) {
-        case 'x64': // Amd64
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-win64.zip`
+      if (semver.lt(version, '4.1.0', true)) {
+        if (arch === 'x64') {
+          return `${baseUrl}/${version}/hurl-${version}-win64.zip`
+        }
+      }
+
+      if (arch === 'x64') {
+        return `${baseUrl}/${version}/hurl-${version}-x86_64-pc-windows-msvc.zip`
       }
 
       throw new Error('Unsupported windows architecture')
