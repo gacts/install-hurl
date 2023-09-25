@@ -72,6 +72,7 @@ async function doInstall(version) {
         await io.rmRF(distPath)
 
         for await (const file of (await glob.create(path.join(pathToUnpack, `hurl-${version}*`))).globGenerator()) {
+          core.info(file)
           await io.mv(file, pathToInstall)
         }
 
