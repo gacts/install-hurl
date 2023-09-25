@@ -72,7 +72,7 @@ async function doInstall(version) {
         await io.rmRF(distPath)
 
         // since v4.1.0 dist directory name (inside the archive) is `hurl-${version}-${platform}-${arch}` instead of `hurl-${version}`
-        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), {
+        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), { // eslint-disable-line no-case-declarations
           implicitDescendants: false,
           matchDirectories: true,
         })).glob()
