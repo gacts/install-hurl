@@ -59,6 +59,9 @@ async function doInstall(version) {
     core.info(`👌 Hurl restored from cache`)
   } else { // cache MISS
     const distUri = getHurlURI(process.platform, process.arch, version)
+
+    core.info(`📦 Downloading the distributive: ${distUri}`)
+
     const distPath = await tc.downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
@@ -138,7 +141,7 @@ function getHurlURI(platform, arch, version) {
 
   switch (platform) {
     case 'linux': {
-      if (semver.lte(version, '4.1.0', true)) {
+      if (semver.lt(version, '4.1.0', true)) {
         if (arch === 'x64') { // Amd64
           return `${baseUrl}/${version}/hurl-${version}-x86_64-linux.tar.gz`
         }
