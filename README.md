@@ -50,7 +50,7 @@ Following inputs can be used as `step.with` keys:
 New versions releasing scenario:
 
 - Make required changes in the [changelog](CHANGELOG.md) file
-- Build the action distribution (`make build` or `yarn build`)
+- Build the action distribution (`make build` or `npm run build`)
 - Commit and push changes (including `dist` directory changes - this is important) into the `master` branch
 - Publish new release using repo releases page (git tag should follow `vX.Y.Z` format)
 
