@@ -71,7 +71,10 @@ async function doInstall(version) {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
-        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`))).glob()
+        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), {
+          implicitDescendants: false,
+          matchDirectories: true,
+        })).glob()
 
         core.info(files.join('\n'))
 
