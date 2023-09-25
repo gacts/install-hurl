@@ -14,39 +14,30 @@ concurrency:
 
 jobs:
   gitleaks:
-    name: Gitleaks
+    name: 🔐 Check for GitLeaks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with: {fetch-depth: 0}
 
-      - name: Check for GitLeaks
-        uses: gacts/gitleaks@v1 # Action page: <https://github.com/gacts/gitleaks>
+      - uses: gacts/gitleaks@v1
 
   eslint:
-    name: Run eslint
+    name: 🧪 Run ESLint
     runs-on: ubuntu-latest
     env: {FORCE_COLOR: 'true'}
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with: {node-version: '16'}
+      - uses: gacts/setup-node-with-cache@v1
+        with: {node-version: 16}
 
-      - uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-yarn-
+      - run: npm ci
 
-      - if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile --no-progress --non-interactive
-
-      - run: yarn lint
+      - run: npm run lint
 
   dist-built:
-    name: Check distributive built state
+    name: 🧪 Check distributive built state
     runs-on: ubuntu-latest
     outputs:
       dist-changed: ${{ steps.state.outputs.changed }}
@@ -54,20 +45,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with: {node-version: '16'}
+      - uses: gacts/setup-node-with-cache@v1
+        with: {node-version: 16}
 
-      - uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-yarn-
+      - run: npm ci
 
-      - if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile --no-progress --non-interactive
-
-      - run: yarn build
+      - run: npm run build
 
       - uses: actions/upload-artifact@v3
         with: {name: dist, path: ./dist/, retention-days: 1}
@@ -76,7 +59,7 @@ jobs:
         run: echo "changed=`git diff --diff-filter=ACMUXTR --name-only | grep dist/ > /dev/null && echo 'true' || echo 'false'`" >> $GITHUB_OUTPUT
 
   commit-and-push-fresh-dist:
-    name: Commit and push fresh distributive
+    name: 🏗️ Commit and push fresh distributive
     needs: [dist-built]
     if: ${{ needs.dist-built.outputs.dist-changed == 'true' }}
     runs-on: ubuntu-latest
@@ -94,7 +77,7 @@ jobs:
           commit_message: Automatic distributive rebuild
 
   run-this-action: # non-existing files will not generate an error
-    name: Run action (${{ matrix.runs-on }}, version ${{ matrix.version }})
+    name: 🚀 Run action (${{ matrix.runs-on }}, version ${{ matrix.version }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false

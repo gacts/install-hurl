@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog][keepachangelog] and this project adher
 
 - The distributive URL for hurl versions `4.1.0` and above
 
+### Changed
+
+- Action dependencies were updated
+
 ## v1.0.3
 
 ### Changed
