@@ -134,11 +134,18 @@ async function getLatestHurlVersion(githubAuthToken) {
  * @throws
  */
 function getHurlURI(platform, arch, version) {
+  const baseUrl = 'https://github.com/Orange-OpenSource/hurl/releases/download/'
+
   switch (platform) {
     case 'linux': {
-      switch (arch) {
-        case 'x64': // Amd64
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-linux.tar.gz`
+      if (semver.lt(version, '4.1.0', true)) {
+        if (arch === 'x64') { // Amd64
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-linux.tar.gz`
+        }
+      }
+
+      if (arch === 'x64') { // Amd64
+        return `${baseUrl}/${version}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
       }
 
       throw new Error('Unsupported linux architecture')
@@ -149,10 +156,10 @@ function getHurlURI(platform, arch, version) {
 
       switch (arch) {
         case 'arm64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-arm64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-arm64-${osName}.tar.gz`
 
         case 'x64':
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
@@ -161,7 +168,7 @@ function getHurlURI(platform, arch, version) {
     case 'win32': {
       switch (arch) {
         case 'x64': // Amd64
-          return `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/hurl-${version}-win64.zip`
+          return `${baseUrl}/${version}/hurl-${version}-win64.zip`
       }
 
       throw new Error('Unsupported windows architecture')
