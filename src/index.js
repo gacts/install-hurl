@@ -71,18 +71,15 @@ async function doInstall(version) {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
+        // since v4.1.0 dist directory name (inside the archive) is `hurl-${version}-${platform}-${arch}` instead of `hurl-${version}`
         const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), {
           implicitDescendants: false,
           matchDirectories: true,
         })).glob()
 
-        core.info(files.join('\n'))
-
         if (files.length !== 1) {
           throw new Error('Distributive archive contains more than one entry')
         }
-
-
 
         await io.mv(files[0], pathToInstall)
 
@@ -163,31 +160,50 @@ function getHurlURI(platform, arch, version) {
         }
       }
 
-      if (arch === 'x64') { // Amd64
-        return `${baseUrl}/${version}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
+      switch (arch) {
+        case 'arm64':
+          return `${baseUrl}/${version}/hurl-${version}-aarch64-unknown-linux-gnu.tar.gz`
+
+        case 'x64':
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
       }
 
       throw new Error('Unsupported linux architecture')
     }
 
     case 'darwin': {
-      const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
+      if (semver.lt(version, '4.1.0', true)) {
+        const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
+
+        switch (arch) {
+          case 'arm64':
+            return `${baseUrl}/${version}/hurl-${version}-arm64-${osName}.tar.gz`
+
+          case 'x64':
+            return `${baseUrl}/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
+        }
+      }
 
       switch (arch) {
         case 'arm64':
-          return `${baseUrl}/${version}/hurl-${version}-arm64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-aarch64-apple-darwin.tar.gz`
 
         case 'x64':
-          return `${baseUrl}/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
+          return `${baseUrl}/${version}/hurl-${version}-x86_64-apple-darwin.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
     }
 
     case 'win32': {
-      switch (arch) {
-        case 'x64': // Amd64
+      if (semver.lt(version, '4.1.0', true)) {
+        if (arch === 'x64') {
           return `${baseUrl}/${version}/hurl-${version}-win64.zip`
+        }
+      }
+
+      if (arch === 'x64') {
+        return `${baseUrl}/${version}/hurl-${version}-x86_64-pc-windows-msvc.zip`
       }
 
       throw new Error('Unsupported windows architecture')
