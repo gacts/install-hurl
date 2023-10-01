@@ -17,7 +17,7 @@ jobs:
     name: 🔐 Check for GitLeaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with: {fetch-depth: 0}
 
       - uses: gacts/gitleaks@v1
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     env: {FORCE_COLOR: 'true'}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: gacts/setup-node-with-cache@v1
         with: {node-version: 16}
@@ -43,7 +43,7 @@ jobs:
       dist-changed: ${{ steps.state.outputs.changed }}
     env: {FORCE_COLOR: 'true'}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: gacts/setup-node-with-cache@v1
         with: {node-version: 16}
@@ -67,7 +67,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v3
         with: {name: dist, path: ./dist/}
@@ -85,7 +85,7 @@ jobs:
         runs-on: [ubuntu-latest, macos-latest, windows-latest]
         version: [1.3.0, 1.7.0, 4.0.0, 4.1.0, latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run this action
         uses: ./
