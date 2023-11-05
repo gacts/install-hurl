@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: gacts/setup-node-with-cache@v1
-        with: {node-version: 16}
+        with: {node-version: 20}
 
       - run: npm ci
 
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: gacts/setup-node-with-cache@v1
-        with: {node-version: 16}
+        with: {node-version: 20}
 
       - run: npm ci
 
