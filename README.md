@@ -19,7 +19,7 @@ Additionally, this action uses GitHub **caching mechanism** to speed up your wor
 ```yaml
 jobs:
   install-hurl:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: gacts/install-hurl@v1
         #with:
