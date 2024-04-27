@@ -13,13 +13,13 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[32m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 install: ## Install all dependencies
-	docker-compose run $(DC_RUN_ARGS) node npm install
+	docker compose run $(DC_RUN_ARGS) node npm install
 
 shell: ## Start shell into a container with node
-	docker-compose run $(DC_RUN_ARGS) node sh
+	docker compose run $(DC_RUN_ARGS) node sh
 
 lint: ## Execute provided linters
-	docker-compose run $(DC_RUN_ARGS) node npm run lint
+	docker compose run $(DC_RUN_ARGS) node npm run lint
 
 build: ## Build frontend
-	docker-compose run $(DC_RUN_ARGS) node npm run build
+	docker compose run $(DC_RUN_ARGS) node npm run build
