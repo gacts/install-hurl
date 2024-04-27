@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog][keepachangelog] and this project adheres to [Semantic Versioning][semver].
 
+## v1.1.1
+
+### Fixed
+
+- The distributive URL for hurl versions `4.3.0` (and above)
+
+### Changed
+
+- Action dependencies were updated
+- The minimal supported `hurl` version is `1.8.0` now
+
 ## v1.1.0
 
 ### Changed

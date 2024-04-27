@@ -71,8 +71,15 @@ async function doInstall(version) {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
-        // since v4.1.0 dist directory name (inside the archive) is `hurl-${version}-${platform}-${arch}` instead of `hurl-${version}`
-        const files = await (await glob.create(path.join(pathToUnpack, `hurl-${version}*`), { // eslint-disable-line no-case-declarations
+        // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin` directory (inside the archive)
+        let binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*/bin`) // eslint-disable-line no-case-declarations
+
+        // for the older versions (before 4.3.0) binary files are located in the `./hurl-${version}-${platform}-${arch}` directory (inside the archive)
+        if (semver.lt(version, '4.3.0', true)) {
+          binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*`)
+        }
+
+        const files = await (await glob.create(binFilesGlobPattern, { // eslint-disable-line no-case-declarations
           implicitDescendants: false,
           matchDirectories: true,
         })).glob()

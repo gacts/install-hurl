@@ -77,13 +77,13 @@ jobs:
           commit_message: Automatic distributive rebuild
 
   run-this-action: # non-existing files will not generate an error
-    name: 🚀 Run action (${{ matrix.runs-on }}, version ${{ matrix.version }})
+    name: 🚀 Run (${{ matrix.runs-on }}, ${{ matrix.version }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-latest, windows-latest]
-        version: [1.3.0, 1.7.0, 4.0.0, 4.1.0, latest]
+        version: [1.8.0, 2.0.0, 3.0.0, 4.0.0, 4.1.0, 4.3.0, latest]
     steps:
       - uses: actions/checkout@v4
 
