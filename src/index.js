@@ -72,7 +72,7 @@ async function doInstall(version) {
         await io.rmRF(distPath)
 
         // since 4.3.0 binary files are located in `bin` directory (inside the archive)
-        let binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*/bin/*`)
+        let binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*/bin/*`) // eslint-disable-line no-case-declarations
 
         // for the older versions (before 4.3.0) binary files are located in the root of the archive
         if (semver.lte(version, '4.2.0', true)) {
