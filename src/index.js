@@ -72,7 +72,7 @@ async function doInstall(version) {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
-        const before430 = semver.lt(version, '4.1.0', true) // before 4.3.0
+        const before430 = semver.lt(version, '4.3.0', true) // before 4.3.0
 
         // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin`
         // directory (inside the archive), but for the older versions (before 4.3.0) they are
