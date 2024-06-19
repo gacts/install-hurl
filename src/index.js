@@ -75,7 +75,7 @@ async function doInstall(version) {
         // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin`
         // directory (inside the archive), but for the older versions (before 4.3.0) they are
         // located in the `./hurl-${version}-${platform}-${arch}` directory
-        let binFilesGlobPattern = path.join(pathToUnpack, semver.lt(version, '4.3.0', true)
+        const binFilesGlobPattern = path.join(pathToUnpack, semver.lt(version, '4.3.0', true)
           ? `hurl-${version}*` // before 4.3.0
           : `hurl-${version}*/bin`)
 
