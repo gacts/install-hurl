@@ -11,7 +11,7 @@ const os = require('os')
 
 // read action inputs
 const input = {
-  version: core.getInput('version', {required: true}).replace(/^v/, ''), // strip the 'v' prefix
+  version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
   githubToken: core.getInput('github-token'),
 }
 
@@ -21,7 +21,7 @@ async function runAction() {
 
   if (input.version.toLowerCase() === 'latest') {
     core.debug('Requesting latest hurl version...')
-    version = await getLatestHurlVersion(input.githubToken)
+    version = await getLatestVersion(input.githubToken)
   } else {
     version = input.version
   }
@@ -40,7 +40,7 @@ async function runAction() {
  *
  * @returns {Promise<void>}
  *
- * @throws
+ * @throws {Error}
  */
 async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `hurl-${version}`)
@@ -48,6 +48,7 @@ async function doInstall(version) {
 
   core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
+  /** @type {string|undefined} */
   let restoredFromCache = undefined
 
   try {
@@ -56,10 +57,10 @@ async function doInstall(version) {
     core.warning(e)
   }
 
-  if (restoredFromCache !== undefined) { // cache HIT
+  if (restoredFromCache) { // cache HIT
     core.info(`👌 Hurl restored from cache`)
   } else { // cache MISS
-    const distUri = getHurlURI(process.platform, process.arch, version)
+    const distUri = getDistUrl(process.platform, process.arch, version)
 
     core.info(`📦 Downloading the distributive: ${distUri}`)
 
@@ -67,19 +68,20 @@ async function doInstall(version) {
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
     switch (true) {
-      case distUri.endsWith('tar.gz'):
+      case distUri.endsWith('tar.gz'): {
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
 
-        // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin` directory (inside the archive)
-        let binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*/bin`) // eslint-disable-line no-case-declarations
+        const before430 = semver.lt(version, '4.1.0', true) // before 4.3.0
 
-        // for the older versions (before 4.3.0) binary files are located in the `./hurl-${version}-${platform}-${arch}` directory (inside the archive)
-        if (semver.lt(version, '4.3.0', true)) {
-          binFilesGlobPattern = path.join(pathToUnpack, `hurl-${version}*`)
-        }
+        // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin`
+        // directory (inside the archive), but for the older versions (before 4.3.0) they are
+        // located in the `./hurl-${version}-${platform}-${arch}` directory
+        let binFilesGlobPattern = before430
+          ? path.join(pathToUnpack, `hurl-${version}*`)
+          : path.join(pathToUnpack, `hurl-${version}*/bin`)
 
-        const files = await (await glob.create(binFilesGlobPattern, { // eslint-disable-line no-case-declarations
+        const files = await (await glob.create(binFilesGlobPattern, {
           implicitDescendants: false,
           matchDirectories: true,
         })).glob()
@@ -91,6 +93,7 @@ async function doInstall(version) {
         await io.mv(files[0], pathToInstall)
 
         break
+      }
 
       case distUri.endsWith('zip'):
         await tc.extractZip(distPath, pathToInstall)
@@ -113,27 +116,27 @@ async function doInstall(version) {
 /**
  * @returns {Promise<void>}
  *
- * @throws
+ * @throws {Error} binary file not found in $PATH or version check failed
  */
 async function doCheck() {
-  const hurlBinPath = await io.which('hurl', true)
+  const binPath = await io.which('hurl', true)
 
-  if (hurlBinPath === "") {
+  if (binPath === "") {
     throw new Error('hurl binary file not found in $PATH')
   }
 
   await exec.exec('hurl', ['--version'], {silent: true})
 
-  core.setOutput('hurl-bin', hurlBinPath)
-
-  core.info(`Hurl installed: ${hurlBinPath}`)
+  core.setOutput('hurl-bin', binPath)
+  core.info(`Hurl installed: ${binPath}`)
 }
 
 /**
  * @param {string} githubAuthToken
  * @returns {Promise<string>}
  */
-async function getLatestHurlVersion(githubAuthToken) {
+async function getLatestVersion(githubAuthToken) {
+  /** @type {import('@actions/github')} */
   const octokit = github.getOctokit(githubAuthToken)
 
   // docs: https://octokit.github.io/rest.js/v18#repos-get-latest-release
@@ -142,7 +145,7 @@ async function getLatestHurlVersion(githubAuthToken) {
     repo: 'hurl',
   })
 
-  return latest.data.tag_name.replace(/^v/, '') // strip the 'v' prefix
+  return latest.data.tag_name.replace(/^[vV]/, '') // strip the 'v' prefix
 }
 
 /**
@@ -154,70 +157,101 @@ async function getLatestHurlVersion(githubAuthToken) {
  *
  * @returns {string}
  *
- * @throws
+ * @throws {Error} Unsupported platform or architecture
  */
-function getHurlURI(platform, arch, version) {
-  const baseUrl = 'https://github.com/Orange-OpenSource/hurl/releases/download'
+function getDistUrl(platform, arch, version) {
+  const baseUrl = `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/`
+  const before410 = semver.lt(version, '4.1.0', true) // before 4.1.0
 
   switch (platform) {
     case 'linux': {
-      if (semver.lt(version, '4.1.0', true)) {
-        if (arch === 'x64') { // Amd64
-          return `${baseUrl}/${version}/hurl-${version}-x86_64-linux.tar.gz`
-        }
-      }
-
       switch (arch) {
-        case 'arm64':
-          return `${baseUrl}/${version}/hurl-${version}-aarch64-unknown-linux-gnu.tar.gz`
-
         case 'x64':
-          return `${baseUrl}/${version}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
+          // v4.3.0 - hurl-4.3.0-x86_64-unknown-linux-gnu.tar.gz
+          // v4.2.0 - hurl-4.2.0-x86_64-unknown-linux-gnu.tar.gz
+          // v4.1.0 - hurl-4.1.0-x86_64-unknown-linux-gnu.tar.gz
+          // v4.0.0 - hurl-4.0.0-x86_64-linux.tar.gz
+          // v3.0.1 - hurl-3.0.1-x86_64-linux.tar.gz
+          // v3.0.0 - hurl-3.0.0-x86_64-linux.tar.gz
+          // v2.0.1 - hurl-2.0.1-x86_64-linux.tar.gz
+          // v2.0.0 - hurl-2.0.0-x86_64-linux.tar.gz
+          // v1.8.0 - hurl-1.8.0-x86_64-linux.tar.gz
+          // v1.7.0 - hurl-1.7.0-x86_64-linux.tar.gz
+          if (before410) {
+            return `${baseUrl}/hurl-${version}-x86_64-linux.tar.gz`
+          }
+
+          return `${baseUrl}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
       }
 
-      throw new Error('Unsupported linux architecture')
+      throw new Error(`Unsupported linux architecture (${arch})`)
     }
 
     case 'darwin': {
-      if (semver.lt(version, '4.1.0', true)) {
-        const osName = semver.lt(version, '1.7.0', true) ? 'osx' : 'macos'
-
-        switch (arch) {
-          case 'arm64':
-            return `${baseUrl}/${version}/hurl-${version}-arm64-${osName}.tar.gz`
-
-          case 'x64':
-            return `${baseUrl}/${version}/hurl-${version}-x86_64-${osName}.tar.gz`
-        }
-      }
-
       switch (arch) {
-        case 'arm64':
-          return `${baseUrl}/${version}/hurl-${version}-aarch64-apple-darwin.tar.gz`
-
+        // v4.3.0 - hurl-4.3.0-x86_64-apple-darwin.tar.gz
+        // v4.2.0 - hurl-4.2.0-x86_64-apple-darwin.tar.gz
+        // v4.1.0 - hurl-4.1.0-x86_64-apple-darwin.tar.gz
+        // v4.0.0 - hurl-4.0.0-x86_64-macos.tar.gz
+        // v3.0.1 - hurl-3.0.1-x86_64-macos.tar.gz
+        // v3.0.0 - hurl-3.0.0-x86_64-macos.tar.gz
+        // v2.0.1 - hurl-2.0.1-x86_64-macos.tar.gz
+        // v2.0.0 - hurl-2.0.0-x86_64-macos.tar.gz
+        // v1.8.0 - hurl-1.8.0-x86_64-macos.tar.gz
+        // v1.7.0 - hurl-1.7.0-x86_64-macos.tar.gz
         case 'x64':
-          return `${baseUrl}/${version}/hurl-${version}-x86_64-apple-darwin.tar.gz`
+          if (before410) {
+            return `${baseUrl}/hurl-${version}-x86_64-macos.tar.gz`
+          }
+
+          return `${baseUrl}/hurl-${version}-x86_64-apple-darwin.tar.gz`
+
+        // v4.3.0 - hurl-4.3.0-aarch64-apple-darwin.tar.gz
+        // v4.2.0 - hurl-4.2.0-aarch64-apple-darwin.tar.gz
+        // v4.1.0 - hurl-4.1.0-aarch64-apple-darwin.tar.gz
+        // v4.0.0 - hurl-4.0.0-arm64-macos.tar.gz
+        // v3.0.1 - hurl-3.0.1-arm64-macos.tar.gz
+        // v3.0.0 - hurl-3.0.0-arm64-macos.tar.gz
+        // v2.0.1 - hurl-2.0.1-arm64-macos.tar.gz
+        // v2.0.0 - hurl-2.0.0-arm64-macos.tar.gz
+        // v1.8.0 - hurl-1.8.0-arm64-macos.tar.gz
+        // v1.7.0 - hurl-1.7.0-arm64-macos.tar.gz
+        case 'arm64':
+          if (before410) {
+            return `${baseUrl}/hurl-${version}-arm64-macos.tar.gz`
+          }
+
+          return `${baseUrl}/hurl-${version}-aarch64-apple-darwin.tar.gz`
       }
 
-      throw new Error('Unsupported MacOS architecture')
+      throw new Error(`Unsupported macOS architecture (${arch})`)
     }
 
     case 'win32': {
-      if (semver.lt(version, '4.1.0', true)) {
-        if (arch === 'x64') {
-          return `${baseUrl}/${version}/hurl-${version}-win64.zip`
-        }
+      switch (arch) {
+        // v4.3.0 - hurl-4.3.0-x86_64-pc-windows-msvc.zip
+        // v4.2.0 - hurl-4.2.0-x86_64-pc-windows-msvc.zip
+        // v4.1.0 - hurl-4.1.0-x86_64-pc-windows-msvc.zip
+        // v4.0.0 - hurl-4.0.0-win64.zip
+        // v3.0.1 - hurl-3.0.1-win64.zip
+        // v3.0.0 - hurl-3.0.0-win64.zip
+        // v2.0.1 - hurl-2.0.1-win64.zip
+        // v2.0.0 - hurl-2.0.0-win64.zip
+        // v1.8.0 - hurl-1.8.0-win64.zip
+        // v1.7.0 - hurl-1.7.0-win64.zip
+        case 'x64':
+          if (before410) {
+            return `${baseUrl}/hurl-${version}-win64.zip`
+          }
+
+          return `${baseUrl}/hurl-${version}-x86_64-pc-windows-msvc.zip`
       }
 
-      if (arch === 'x64') {
-        return `${baseUrl}/${version}/hurl-${version}-x86_64-pc-windows-msvc.zip`
-      }
-
-      throw new Error('Unsupported windows architecture')
+      throw new Error(`Unsupported windows architecture (${arch})`)
     }
   }
 
-  throw new Error('Unsupported OS (platform)')
+  throw new Error(`Unsupported platform (${platform})`)
 }
 
 // run the action
