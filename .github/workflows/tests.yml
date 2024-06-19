@@ -1,4 +1,7 @@
-name: tests
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# docs: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+
+name: 🧪 Tests
 
 on:
   push:
@@ -12,54 +15,42 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
+env: {FORCE_COLOR: 'true'}
+
 jobs:
   gitleaks:
-    name: 🔐 Check for GitLeaks
+    name: Check for GitLeaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-
+      - {uses: actions/checkout@v4, with: {fetch-depth: 0}}
       - uses: gacts/gitleaks@v1
 
   eslint:
-    name: 🧪 Run ESLint
+    name: Run code linter
     runs-on: ubuntu-latest
-    env: {FORCE_COLOR: 'true'}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: gacts/setup-node-with-cache@v1
-        with: {node-version: 20}
-
-      - run: npm ci
-
+      - {uses: gacts/setup-node-with-cache@v1, with: {node-version: 20}}
+      - run: npm install
       - run: npm run lint
 
   dist-built:
-    name: 🧪 Check distributive built state
+    name: Check distributive built state
     runs-on: ubuntu-latest
     outputs:
       dist-changed: ${{ steps.state.outputs.changed }}
-    env: {FORCE_COLOR: 'true'}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: gacts/setup-node-with-cache@v1
-        with: {node-version: 20}
-
-      - run: npm ci
-
+      - {uses: gacts/setup-node-with-cache@v1, with: {node-version: 20}}
+      - run: npm install
       - run: npm run build
-
       - uses: actions/upload-artifact@v4
         with: {name: dist, path: ./dist/, retention-days: 1}
-
       - id: state
         run: echo "changed=`git diff --diff-filter=ACMUXTR --name-only | grep dist/ > /dev/null && echo 'true' || echo 'false'`" >> $GITHUB_OUTPUT
 
   commit-and-push-fresh-dist:
-    name: 🏗️ Commit and push fresh distributive
+    name: Commit and push fresh distributive
     needs: [dist-built]
     if: ${{ needs.dist-built.outputs.dist-changed == 'true' }}
     runs-on: ubuntu-latest
@@ -68,13 +59,10 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/download-artifact@v4
         with: {name: dist, path: ./dist/}
-
       - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Automatic distributive rebuild
+        with: {commit_message: Automatic distributive rebuild}
 
   run-this-action: # non-existing files will not generate an error
     name: 🚀 Run (${{ matrix.runs-on }}, ${{ matrix.version }})
@@ -86,10 +74,7 @@ jobs:
         version: [1.8.0, 2.0.0, 3.0.0, 4.0.0, 4.1.0, 4.3.0, latest]
     steps:
       - uses: actions/checkout@v4
-
       - name: Run this action
         uses: ./
-        with:
-          version: ${{ matrix.version }}
-
+        with: {version: '${{ matrix.version }}'}
       - run: hurl --version
