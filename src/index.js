@@ -180,6 +180,18 @@ function getDistUrl(platform, arch, version) {
           }
 
           return `${baseUrl}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
+
+        // v4.3.0 - hurl-4.3.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.2.0 - hurl-4.2.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.1.0 - hurl-4.1.0-aarch64-unknown-linux-gnu.tar.gz
+        case 'arm64':
+          if (before410) {
+            // Linux ARM64 is supported since 4.1.0
+            // Refer: https://github.com/Orange-OpenSource/hurl/releases/tag/4.1.0
+            throw new Error(`Unsupported linux architecture (${arch})`)
+          }
+
+          return `${baseUrl}/hurl-${version}-aarch64-unknown-linux-gnu.tar.gz`
       }
 
       throw new Error(`Unsupported linux architecture (${arch})`)
