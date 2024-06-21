@@ -184,6 +184,13 @@ function getDistUrl(platform, arch, version) {
         // v4.3.0 - hurl-4.3.0-aarch64-unknown-linux-gnu.tar.gz
         // v4.2.0 - hurl-4.2.0-aarch64-unknown-linux-gnu.tar.gz
         // v4.1.0 - hurl-4.1.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.0.0 - NONE
+        // v3.0.1 - NONE
+        // v3.0.0 - NONE
+        // v2.0.1 - NONE
+        // v2.0.0 - NONE
+        // v1.8.0 - NONE
+        // v1.7.0 - NONE
         case 'arm64':
           if (before410) {
             // Linux ARM64 is supported since 4.1.0
