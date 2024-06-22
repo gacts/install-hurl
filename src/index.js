@@ -180,6 +180,23 @@ function getDistUrl(platform, arch, version) {
           }
 
           return `${baseUrl}/hurl-${version}-x86_64-unknown-linux-gnu.tar.gz`
+
+        // v4.3.0 - hurl-4.3.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.2.0 - hurl-4.2.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.1.0 - hurl-4.1.0-aarch64-unknown-linux-gnu.tar.gz
+        // v4.0.0 - NONE
+        // v3.0.1 - NONE
+        // v3.0.0 - NONE
+        // v2.0.1 - NONE
+        // v2.0.0 - NONE
+        // v1.8.0 - NONE
+        // v1.7.0 - NONE
+        case 'arm64':
+          if (!before410) { // linux ARM64 is supported since 4.1.0
+            return `${baseUrl}/hurl-${version}-aarch64-unknown-linux-gnu.tar.gz`
+          }
+
+          throw new Error(`Unsupported linux architecture/version (${arch}/${version})`)
       }
 
       throw new Error(`Unsupported linux architecture (${arch})`)
