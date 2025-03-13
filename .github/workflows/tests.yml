@@ -65,16 +65,17 @@ jobs:
         with: {commit_message: Automatic distributive rebuild}
 
   run-this-action: # non-existing files will not generate an error
-    name: 🚀 Run (${{ matrix.runs-on }}, ${{ matrix.version }})
+    name: 🚀 Run (${{ matrix.runs-on }}, ${{ matrix.version }}, !cache ${{ matrix.disable-cache }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-latest, windows-latest]
-        version: [4.0.0, 4.1.0, 4.3.0, 5.0.1, 6.0.0, 6.1.0, latest]
+        version: [4.0.0, 4.1.0, 4.3.0, 5.0.1, 6.0.0, latest]
+        disable-cache: [true, false]
     steps:
       - uses: actions/checkout@v4
       - name: Run this action
         uses: ./
-        with: {version: '${{ matrix.version }}'}
+        with: {version: '${{ matrix.version }}', disable-cache: '${{ matrix.disable-cache }}'}
       - run: hurl --version

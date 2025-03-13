@@ -9,6 +9,10 @@ inputs:
     description: Hurl version
     required: true
     default: latest
+  disable-cache:
+    description: Disable cache usage
+    required: false
+    default: false
   github-token:
     description: GitHub auth token. Since there's a default, this is typically not supplied by the user
     required: false
