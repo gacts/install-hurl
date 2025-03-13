@@ -12,6 +12,7 @@ const os = require('os')
 // read action inputs
 const input = {
   version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
+  cacheDisabled: core.getBooleanInput('disable-cache'),
   githubToken: core.getInput('github-token'),
 }
 
@@ -51,10 +52,12 @@ async function doInstall(version) {
   /** @type {string|undefined} */
   let restoredFromCache = undefined
 
-  try {
-    restoredFromCache = await cache.restoreCache([pathToInstall], cacheKey)
-  } catch (e) {
-    core.warning(e)
+  if (!input.cacheDisabled) {
+    try {
+      restoredFromCache = await cache.restoreCache([pathToInstall], cacheKey)
+    } catch (e) {
+      core.warning(e)
+    }
   }
 
   if (restoredFromCache) { // cache HIT
@@ -101,10 +104,12 @@ async function doInstall(version) {
         throw new Error('Unsupported distributive format')
     }
 
-    try {
-      await cache.saveCache([pathToInstall], cacheKey)
-    } catch (e) {
-      core.warning(e)
+    if (!input.cacheDisabled) {
+      try {
+        await cache.saveCache([pathToInstall], cacheKey)
+      } catch (e) {
+        core.warning(e)
+      }
     }
   }
 

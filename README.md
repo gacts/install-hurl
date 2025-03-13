@@ -24,6 +24,7 @@ jobs:
     steps:
       - uses: gacts/install-hurl@v1
         #with:
+        #  disable-cache: true # disable cache usage
         #  version: 1.2.0 # `latest` by default, but you can set a specific version to install
 
       - run: hurl version # any hurl command can be executed
@@ -35,10 +36,11 @@ jobs:
 
 The following inputs can be used as `step.with` keys:
 
-| Name           |   Type   |        Default        | Required | Description                                                |
-|----------------|:--------:|:---------------------:|:--------:|------------------------------------------------------------|
-| `version`      | `string` |       `latest`        |    no    | Hurl version to install                                    |
-| `github-token` | `string` | `${{ github.token }}` |    no    | GitHub token (for requesting the latest hurl version info) |
+| Name            |   Type    |        Default        | Required | Description                                                |
+|-----------------|:---------:|:---------------------:|:--------:|------------------------------------------------------------|
+| `version`       | `string`  |       `latest`        |    no    | Hurl version to install                                    |
+| `disable-cache` | `boolean` |        `false`        |    no    | Disable cache usage                                        |
+| `github-token`  | `string`  | `${{ github.token }}` |    no    | GitHub token (for requesting the latest hurl version info) |
 
 ### Outputs
 
