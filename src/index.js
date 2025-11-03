@@ -1,13 +1,13 @@
-const core = require('@actions/core') // docs: https://github.com/actions/toolkit/tree/main/packages/core
-const tc = require('@actions/tool-cache') // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
-const github = require('@actions/github') // docs: https://github.com/actions/toolkit/tree/main/packages/github
-const io = require('@actions/io') // docs: https://github.com/actions/toolkit/tree/main/packages/io
-const cache = require('@actions/cache') // docs: https://github.com/actions/toolkit/tree/main/packages/cache
-const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
-const glob = require('@actions/glob') // docs: https://github.com/actions/toolkit/tree/main/packages/glob
-const semver = require('semver') // docs: https://github.com/npm/node-semver#readme
-const path = require('path')
-const os = require('os')
+import core from '@actions/core' // docs: https://github.com/actions/toolkit/tree/main/packages/core
+import tc from '@actions/tool-cache' // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
+import github from '@actions/github' // docs: https://github.com/actions/toolkit/tree/main/packages/github
+import io from '@actions/io' // docs: https://github.com/actions/toolkit/tree/main/packages/io
+import cache from '@actions/cache' // docs: https://github.com/actions/toolkit/tree/main/packages/cache
+import exec from '@actions/exec' // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+import glob from '@actions/glob' // docs: https://github.com/actions/toolkit/tree/main/packages/glob
+import semver from 'semver' // docs: https://github.com/npm/node-semver#readme
+import path from 'path'
+import os from 'os'
 
 // read action inputs
 const input = {
