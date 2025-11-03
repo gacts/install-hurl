@@ -23,7 +23,7 @@ outputs:
     description: Path to the hurl binary file
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
 
 branding:
