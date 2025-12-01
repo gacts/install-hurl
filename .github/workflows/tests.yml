@@ -29,7 +29,7 @@ jobs:
     name: Run code linter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - {uses: actions/setup-node@v4, with: {node-version-file: ./package.json, cache: 'npm'}}
       - run: npm install
       - run: npm run lint
@@ -40,7 +40,7 @@ jobs:
     outputs:
       dist-changed: ${{ steps.state.outputs.changed }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - {uses: actions/setup-node@v4, with: {node-version-file: ./package.json, cache: 'npm'}}
       - run: npm install
       - run: npm run build
@@ -58,7 +58,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with: {name: dist, path: ./dist/}
       - uses: stefanzweifel/git-auto-commit-action@v7
@@ -74,7 +74,7 @@ jobs:
         version: [4.0.0, 4.1.0, 4.3.0, 5.0.1, 6.0.0, latest]
         disable-cache: [true, false]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Run this action
         uses: ./
         with: {version: '${{ matrix.version }}', disable-cache: '${{ matrix.disable-cache }}'}
