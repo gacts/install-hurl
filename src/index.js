@@ -1,19 +1,19 @@
-import core from '@actions/core' // docs: https://github.com/actions/toolkit/tree/main/packages/core
-import tc from '@actions/tool-cache' // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
-import github from '@actions/github' // docs: https://github.com/actions/toolkit/tree/main/packages/github
-import io from '@actions/io' // docs: https://github.com/actions/toolkit/tree/main/packages/io
-import cache from '@actions/cache' // docs: https://github.com/actions/toolkit/tree/main/packages/cache
-import exec from '@actions/exec' // docs: https://github.com/actions/toolkit/tree/main/packages/exec
-import glob from '@actions/glob' // docs: https://github.com/actions/toolkit/tree/main/packages/glob
-import semver from 'semver' // docs: https://github.com/npm/node-semver#readme
+import { getInput, getBooleanInput, debug, startGroup, endGroup, info, warning, addPath, setOutput, setFailed } from '@actions/core' // docs: https://github.com/actions/toolkit/tree/main/packages/core
+import { downloadTool, extractTar, extractZip } from '@actions/tool-cache' // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
+import { getOctokit } from '@actions/github' // docs: https://github.com/actions/toolkit/tree/main/packages/github
+import { rmRF, mv, which } from '@actions/io' // docs: https://github.com/actions/toolkit/tree/main/packages/io
+import { restoreCache, saveCache } from '@actions/cache' // docs: https://github.com/actions/toolkit/tree/main/packages/cache
+import { exec } from '@actions/exec' // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+import { create as createGlob } from '@actions/glob' // docs: https://github.com/actions/toolkit/tree/main/packages/glob
+import { lt as semverLt } from 'semver' // docs: https://github.com/npm/node-semver#readme
 import path from 'path'
 import os from 'os'
 
 // read action inputs
 const input = {
-  version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
-  cacheDisabled: core.getBooleanInput('disable-cache'),
-  githubToken: core.getInput('github-token'),
+  version: getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
+  cacheDisabled: getBooleanInput('disable-cache'),
+  githubToken: getInput('github-token'),
 }
 
 // main action entrypoint
@@ -21,19 +21,19 @@ async function runAction() {
   let version
 
   if (input.version.toLowerCase() === 'latest') {
-    core.debug('Requesting latest hurl version...')
+    debug('Requesting latest hurl version...')
     version = await getLatestVersion(input.githubToken)
   } else {
     version = input.version
   }
 
-  core.startGroup('💾 Install hurl')
+  startGroup('💾 Install hurl')
   await doInstall(version)
-  core.endGroup()
+  endGroup()
 
-  core.startGroup('🧪 Installation check')
+  startGroup('🧪 Installation check')
   await doCheck()
-  core.endGroup()
+  endGroup()
 }
 
 /**
@@ -47,42 +47,42 @@ async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `hurl-${version}`)
   const cacheKey = `hurl-cache-${version}-${process.platform}-${process.arch}`
 
-  core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
+  info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
   /** @type {string|undefined} */
   let restoredFromCache = undefined
 
   if (!input.cacheDisabled) {
     try {
-      restoredFromCache = await cache.restoreCache([pathToInstall], cacheKey)
+      restoredFromCache = await restoreCache([pathToInstall], cacheKey)
     } catch (e) {
-      core.warning(e)
+      warning(e)
     }
   }
 
   if (restoredFromCache) { // cache HIT
-    core.info(`👌 Hurl restored from cache`)
+    info(`👌 Hurl restored from cache`)
   } else { // cache MISS
     const distUri = getDistUrl(process.platform, process.arch, version)
 
-    core.info(`📦 Downloading the distributive: ${distUri}`)
+    info(`📦 Downloading the distributive: ${distUri}`)
 
-    const distPath = await tc.downloadTool(distUri)
+    const distPath = await downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `hurl.tmp`)
 
     switch (true) {
       case distUri.endsWith('tar.gz'): {
-        await tc.extractTar(distPath, pathToUnpack)
-        await io.rmRF(distPath)
+        await extractTar(distPath, pathToUnpack)
+        await rmRF(distPath)
 
         // since 4.3.0 binary files are located in `./hurl-${version}-${platform}-${arch}/bin`
         // directory (inside the archive), but for the older versions (before 4.3.0) they are
         // located in the `./hurl-${version}-${platform}-${arch}` directory
-        const binFilesGlobPattern = path.join(pathToUnpack, semver.lt(version, '4.3.0', true)
+        const binFilesGlobPattern = path.join(pathToUnpack, semverLt(version, '4.3.0', true)
           ? `hurl-${version}*` // before 4.3.0
           : `hurl-${version}*/bin`)
 
-        const files = await (await glob.create(binFilesGlobPattern, {
+        const files = await (await createGlob(binFilesGlobPattern, {
           implicitDescendants: false,
           matchDirectories: true,
         })).glob()
@@ -91,13 +91,13 @@ async function doInstall(version) {
           throw new Error('Distributive archive contains more than one entry')
         }
 
-        await io.mv(files[0], pathToInstall)
+        await mv(files[0], pathToInstall)
 
         break
       }
 
       case distUri.endsWith('zip'):
-        await tc.extractZip(distPath, pathToInstall)
+        await extractZip(distPath, pathToInstall)
         break
 
       default:
@@ -106,14 +106,14 @@ async function doInstall(version) {
 
     if (!input.cacheDisabled) {
       try {
-        await cache.saveCache([pathToInstall], cacheKey)
+        await saveCache([pathToInstall], cacheKey)
       } catch (e) {
-        core.warning(e)
+        warning(e)
       }
     }
   }
 
-  core.addPath(pathToInstall)
+  addPath(pathToInstall)
 }
 
 /**
@@ -122,16 +122,16 @@ async function doInstall(version) {
  * @throws {Error} binary file not found in $PATH or version check failed
  */
 async function doCheck() {
-  const binPath = await io.which('hurl', true)
+  const binPath = await which('hurl', true)
 
   if (binPath === "") {
     throw new Error('hurl binary file not found in $PATH')
   }
 
-  await exec.exec('hurl', ['--version'], {silent: true})
+  await exec('hurl', ['--version'], {silent: true})
 
-  core.setOutput('hurl-bin', binPath)
-  core.info(`Hurl installed: ${binPath}`)
+  setOutput('hurl-bin', binPath)
+  info(`Hurl installed: ${binPath}`)
 }
 
 /**
@@ -140,7 +140,7 @@ async function doCheck() {
  */
 async function getLatestVersion(githubAuthToken) {
   /** @type {import('@actions/github')} */
-  const octokit = github.getOctokit(githubAuthToken)
+  const octokit = getOctokit(githubAuthToken)
 
   // docs: https://octokit.github.io/rest.js/v18#repos-get-latest-release
   const latest = await octokit.rest.repos.getLatestRelease({
@@ -164,7 +164,7 @@ async function getLatestVersion(githubAuthToken) {
  */
 function getDistUrl(platform, arch, version) {
   const baseUrl = `https://github.com/Orange-OpenSource/hurl/releases/download/${version}/`
-  const before410 = semver.lt(version, '4.1.0', true) // before 4.1.0
+  const before410 = semverLt(version, '4.1.0', true) // before 4.1.0
 
   switch (platform) {
     case 'linux': {
@@ -278,5 +278,5 @@ function getDistUrl(platform, arch, version) {
 (async () => {
   await runAction()
 })().catch(error => {
-  core.setFailed(error.message)
+  setFailed(error.message)
 })
